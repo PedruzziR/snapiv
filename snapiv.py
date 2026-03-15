@@ -108,20 +108,37 @@ else:
             # ⬇️ ESPAÇO PARA OS SEUS CÁLCULOS! ⬇️
             # =====================================================================
             
-            # Variáveis iniciais sugeridas para você usar na sua regra
+            # 1. Variáveis iniciais (as nossas "caixinhas" de contagem zeradas)
             contagem_desatencao = 0
             contagem_hiper = 0
             
-            # Exemplo de laço para você iterar sobre as respostas (de 1 a 18)
+            # 2. Respostas que disparam a pontuação
+            respostas_alvo = ["Bastante.", "Demais."]
+            
+            # 3. Laço de repetição: o computador olha cada uma das 18 respostas
             for num_q, valor_resposta in respostas_coletadas.items():
                 
-                # SEU CÁLCULO AQUI! 
-                # Dica: valor_resposta será "Nem um pouco.", "Só um pouco.", "Bastante." ou "Demais."
-                pass
+                # Se o pai/mãe marcou Bastante ou Demais...
+                if valor_resposta in respostas_alvo:
+                    
+                    # ...e a questão for de 1 a 9, soma 1 ponto em Desatenção
+                    if 1 <= num_q <= 9:
+                        contagem_desatencao += 1
+                        
+                    # ...e a questão for de 10 a 18, soma 1 ponto em Hiperatividade
+                    elif 10 <= num_q <= 18:
+                        contagem_hiper += 1
             
-            # Defina os resultados finais para o e-mail:
-            res_desatencao = "SEU RESULTADO AQUI"
-            res_hiper = "SEU RESULTADO AQUI"
+            # 4. Definição dos resultados finais para o e-mail (A regra de corte)
+            if contagem_desatencao >= 6:
+                res_desatencao = "Positivo"
+            else:
+                res_desatencao = "Negativo"
+                
+            if contagem_hiper >= 6:
+                res_hiper = "Positivo"
+            else:
+                res_hiper = "Negativo"
             
             # =====================================================================
             # ⬆️ FIM DO ESPAÇO DE CÁLCULOS ⬆️
