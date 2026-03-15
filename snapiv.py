@@ -1,4 +1,87 @@
-"Perde coisas necessárias para atividades (brinquedos, deveres da escola, lápis ou livros).",
+import streamlit as st
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import json
+import gspread
+from google.oauth2.service_account import Credentials
+
+# ================= CONFIGURAÇÕES DE E-MAIL =================
+SEU_EMAIL = st.secrets["EMAIL_USUARIO"]
+SENHA_DO_EMAIL = st.secrets["SENHA_USUARIO"]
+# ===========================================================
+
+# ================= CONEXÃO COM GOOGLE SHEETS =================
+@st.cache_resource
+def conectar_planilha():
+    creds_dict = json.loads(st.secrets["GOOGLE_CREDENTIALS_JSON"])
+    escopos = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=escopos)
+    client = gspread.authorize(creds)
+    return client.open("SNAP-IV").sheet1  # PLANILHA "SNAP-IV" NO DRIVE
+
+try:
+    planilha = conectar_planilha()
+except Exception as e:
+    st.error(f"Erro de conexão: {e}")
+    st.stop()
+# =============================================================
+
+def enviar_email_resultados(nome_pac, cpf, nome_resp, vinculo, contagem_desatencao, res_desatencao, contagem_hiper, res_hiper):
+    assunto = f"Resultados Escala SNAP-IV - Paciente: {nome_pac}"
+    
+    corpo = f"Avaliação Escala SNAP-IV concluída.\n\n"
+    corpo += f"=== DADOS DO PACIENTE ===\n"
+    corpo += f"Nome: {nome_pac}\n"
+    corpo += f"CPF (Login): {cpf}\n\n"
+    
+    corpo += f"=== DADOS DO RESPONDENTE ===\n"
+    corpo += f"Nome: {nome_resp}\n"
+    corpo += f"Vínculo: {vinculo}\n\n"
+    
+    corpo += "================ RESULTADOS DA CORREÇÃO ================\n\n"
+    
+    corpo += "► FATOR: DESATENÇÃO (Questões 1 a 9)\n"
+    corpo += f"Sintomas marcados como 'Bastante' ou 'Demais': {contagem_desatencao} de 9\n"
+    corpo += f"Resultado Clínico: {res_desatencao}\n\n"
+
+    corpo += "► FATOR: HIPERATIVIDADE / IMPULSIVIDADE (Questões 10 a 18)\n"
+    corpo += f"Sintomas marcados como 'Bastante' ou 'Demais': {contagem_hiper} de 9\n"
+    corpo += f"Resultado Clínico: {res_hiper}\n\n"
+    
+    corpo += "--------------------------------------------------------\n"
+    corpo += "* Regra aplicada:\n"
+    corpo += "- Se ≥ 6 em Desatenção = Positivo (senão Negativo).\n"
+    corpo += "- Se ≥ 6 em Hiperatividade/Impulsividade = Positivo (senão Negativo).\n"
+
+    msg = MIMEMultipart()
+    msg['From'] = SEU_EMAIL
+    msg['To'] = "psicologabrunaligoski@gmail.com"
+    msg['Subject'] = assunto
+    msg.attach(MIMEText(corpo, 'plain'))
+
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(SEU_EMAIL, SENHA_DO_EMAIL)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        return False
+
+# 1. Perguntas e Opções
+perguntas = [
+    "Não consegue prestar muita atenção a detalhes ou comete erros por descuido nos trabalhos da escola ou tarefas.",
+    "Tem dificuldade de manter a atenção em tarefas ou atividades de lazer.",
+    "Parece não estar ouvindo quando se fala diretamente com ele.",
+    "Não segue instruções até o fim e não termina deveres de escola, tarefas ou obrigações.",
+    "Tem dificuldade para organizar tarefas e atividades.",
+    "Evita, não gosta ou se envolve contra a vontade em tarefas que exigem esforço mental prolongado.",
+    "Perde coisas necessárias para atividades (brinquedos, deveres da escola, lápis ou livros).",
     "Distrai-se com estímulos externos.",
     "É esquecido em atividades do dia a dia.",
     "Mexe com as mãos ou os pés ou se remexe na cadeira.",
@@ -105,31 +188,19 @@ else:
         else:
             
             # =====================================================================
-            # ⬇️ ESPAÇO PARA OS SEUS CÁLCULOS! ⬇️
+            # CÁLCULOS SNAP-IV
             # =====================================================================
-            
-            # 1. Variáveis iniciais (as nossas "caixinhas" de contagem zeradas)
             contagem_desatencao = 0
             contagem_hiper = 0
-            
-            # 2. Respostas que disparam a pontuação
             respostas_alvo = ["Bastante.", "Demais."]
             
-            # 3. Laço de repetição: o computador olha cada uma das 18 respostas
             for num_q, valor_resposta in respostas_coletadas.items():
-                
-                # Se o pai/mãe marcou Bastante ou Demais...
                 if valor_resposta in respostas_alvo:
-                    
-                    # ...e a questão for de 1 a 9, soma 1 ponto em Desatenção
                     if 1 <= num_q <= 9:
                         contagem_desatencao += 1
-                        
-                    # ...e a questão for de 10 a 18, soma 1 ponto em Hiperatividade
                     elif 10 <= num_q <= 18:
                         contagem_hiper += 1
             
-            # 4. Definição dos resultados finais para o e-mail (A regra de corte)
             if contagem_desatencao >= 6:
                 res_desatencao = "Positivo"
             else:
@@ -139,9 +210,6 @@ else:
                 res_hiper = "Positivo"
             else:
                 res_hiper = "Negativo"
-            
-            # =====================================================================
-            # ⬆️ FIM DO ESPAÇO DE CÁLCULOS ⬆️
             # =====================================================================
 
             with st.spinner('Processando os resultados e enviando e-mail...'):
