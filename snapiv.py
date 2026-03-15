@@ -46,11 +46,11 @@ def enviar_email_resultados(nome_pac, cpf, nome_resp, vinculo, contagem_desatenc
     
     corpo += "► FATOR: DESATENÇÃO (Questões 1 a 9)\n"
     corpo += f"Sintomas marcados como 'Bastante' ou 'Demais': {contagem_desatencao} de 9\n"
-    corpo += f"Resultado Clínico: {res_desatencao}\n\n"
+    corpo += f"Classificação: {res_desatencao}\n\n"
 
     corpo += "► FATOR: HIPERATIVIDADE / IMPULSIVIDADE (Questões 10 a 18)\n"
     corpo += f"Sintomas marcados como 'Bastante' ou 'Demais': {contagem_hiper} de 9\n"
-    corpo += f"Resultado Clínico: {res_hiper}\n\n"
+    corpo += f"Classificação: {res_hiper}\n\n"
     
     corpo += "--------------------------------------------------------\n"
     corpo += "* Regra aplicada:\n"
