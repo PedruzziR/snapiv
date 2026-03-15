@@ -54,8 +54,8 @@ def enviar_email_resultados(nome_pac, cpf, nome_resp, vinculo, contagem_desatenc
     
     corpo += "--------------------------------------------------------\n"
     corpo += "* Regra aplicada:\n"
-    corpo += "- Se ≥ 6 em Desatenção = Positivo (senão Negativo).\n"
-    corpo += "- Se ≥ 6 em Hiperatividade/Impulsividade = Positivo (senão Negativo).\n"
+    corpo += "- Se ≥ 6 em Desatenção = Clínico (senão, Não Clínico).\n"
+    corpo += "- Se ≥ 6 em Hiperatividade/Impulsividade = Clínico (senão, Não Clínico).\n"
 
     msg = MIMEMultipart()
     msg['From'] = SEU_EMAIL
@@ -134,8 +134,9 @@ if not st.session_state.logado:
                 except:
                     cpfs_registrados = []
                     
-                if cpf_input in cpfs_registrados:
-                    st.error("Acesso bloqueado. Este CPF já consta em nossa base de dados para o SNAP-IV.")
+                # NOVA REGRA: Conta quantas vezes o CPF aparece. Só bloqueia se for 4 ou mais.
+                if cpfs_registrados.count(cpf_input) >= 4:
+                    st.error("Acesso bloqueado. Este CPF já atingiu o limite máximo de 4 avaliações cadastradas.")
                 else:
                     st.session_state.logado = True
                     st.session_state.cpf_paciente = cpf_input
@@ -202,14 +203,14 @@ else:
                         contagem_hiper += 1
             
             if contagem_desatencao >= 6:
-                res_desatencao = "Positivo"
+                res_desatencao = "Clínico"
             else:
-                res_desatencao = "Negativo"
+                res_desatencao = "Não Clínico"
                 
             if contagem_hiper >= 6:
-                res_hiper = "Positivo"
+                res_hiper = "Clínico"
             else:
-                res_hiper = "Negativo"
+                res_hiper = "Não Clínico"
             # =====================================================================
 
             with st.spinner('Processando os resultados e enviando e-mail...'):
