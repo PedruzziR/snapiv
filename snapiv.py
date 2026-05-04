@@ -236,9 +236,3 @@ with st.form("form_snap_iv"):
                         st.rerun()
                 else:
                     st.error("Erro ao enviar. Tente novamente ou contate a profissional.")
-
-
-# --- Keepalive: botão clicado pelo robô de ping para manter o app ativo ---
-with st.sidebar:
-    if st.button("Manter ativo", key="__keepalive__"):
-        pass
